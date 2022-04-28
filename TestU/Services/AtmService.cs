@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TestU.Interfaces;
+using TestU.Models;
 
 namespace TestU.Services
 {
@@ -12,27 +13,32 @@ namespace TestU.Services
         {
             _nominalProvider = nominalProvider;
         }
-        
+
         public Dictionary<string, int> Exchange(decimal money)
         {
+            var reminder = money;
             var result = new Dictionary<string, int>();
 
             foreach (var banknote in _nominalProvider.GetNominals())
             {
-                var count = (int)(money / banknote.Value);
-                if (count > 0)
-                {
-                    result.Add(banknote.Name, count);
-                }
+                var requested = CalculateBanknoteCount(reminder, banknote);
 
-                money -= count * banknote.Value;
+                if (requested > 0)
+                {
+                    result.Add(banknote.Name, requested);
+                    reminder -= requested * banknote.Value;
+                }
             }
 
-            return result;
+            return reminder != 0
+                ? throw new Exception($"ATM could not exchange {money}, reminder is {reminder}.")
+                : result;
         }
-    }
 
-    public class AtmResult
-    {
+        private static int CalculateBanknoteCount(decimal money, Banknote banknote)
+        {
+            var requested = (int)(money / banknote.Value);
+            return (requested > banknote.Available) ? banknote.Available : requested;
+        }
     }
 }

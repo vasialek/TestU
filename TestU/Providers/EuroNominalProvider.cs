@@ -8,29 +8,25 @@ namespace TestU.Providers
 {
     public class EuroNominalProvider : INominalProvider
     {
+        private static readonly decimal[] Nominals = new[] { 0.01m, 0.02m, 0.05m, 0.10m, 0.20m, 0.50m, 1, 2, 5, 10, 20, 50, 100, 200, 500 };
+
+        private readonly IBanknoteNameService _banknoteNameService;
+
+        public EuroNominalProvider(IBanknoteNameService banknoteNameService)
+        {
+            _banknoteNameService = banknoteNameService;
+        }
+
         public IEnumerable<Banknote> GetNominals()
         {
-            var nominals = new [] {0.01m, 0.02m, 0.05m, 0.10m, 0.20m, 0.50m, 1, 2, 5, 10, 20, 50, 100, 200, 500};
-
-            return nominals
+            return Nominals
                 .OrderByDescending(n => n)
                 .Select(n => new Banknote(n, GetName(n)));
         }
 
-        private static string GetName(decimal value)
+        private string GetName(decimal value)
         {
-            return value >= 1 ? GetMajorName(value) : GetMinorName(value);
-        }
-        
-        private static string GetMajorName(decimal value)
-        {
-            return value.ToString(CultureInfo.InvariantCulture);
-        }
-
-        private static string GetMinorName(decimal value)
-        {
-            value *= 100;
-            return $"{value:N0} ct";
+            return _banknoteNameService.GetName(value);
         }
     }
 }
